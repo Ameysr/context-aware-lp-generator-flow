@@ -407,7 +407,7 @@ const ResultPreview: React.FC<ResultPreviewProps> = ({ result, onReset }) => {
                       src={originalPreviewUrl}
                       title="Original landing page"
                       className="preview-iframe"
-                      sandbox="allow-same-origin"
+                      sandbox="allow-same-origin allow-scripts allow-forms"
                     />
                   </div>
                 ) : screenshotBase64 ? (
@@ -450,7 +450,7 @@ const ResultPreview: React.FC<ResultPreviewProps> = ({ result, onReset }) => {
                       src={previewUrl}
                       title="Personalized landing page"
                       className="preview-iframe"
-                      sandbox="allow-same-origin"
+                      sandbox="allow-same-origin allow-scripts allow-forms"
                     />
                   </div>
                 ) : (

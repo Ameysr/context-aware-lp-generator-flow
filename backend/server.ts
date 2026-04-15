@@ -122,11 +122,25 @@ app.get("/api/preview/:id", (req: Request, res: Response) => {
     return;
   }
 
+  // Strip CSP headers, X-Frame-Options, and frame-busting scripts
+  // so the scraped HTML renders correctly inside our iframe
+  let html = preview.html;
+
+  // Remove <meta http-equiv="Content-Security-Policy" ...> tags
+  html = html.replace(/<meta[^>]*http-equiv=["']Content-Security-Policy["'][^>]*>/gi, '');
+  html = html.replace(/<meta[^>]*http-equiv=["']X-Frame-Options["'][^>]*>/gi, '');
+
+  // Remove inline frame-busting JS patterns
+  html = html.replace(/if\s*\(\s*(?:self|window|top)\s*[!=]=+\s*(?:top|window|self|parent)/gi, 'if (false');
+  html = html.replace(/top\.location(?:\.href)?\s*=\s*(?:self|window)\.location(?:\.href)?/gi, '// blocked');
+
   res.set({
     "Content-Type": "text/html",
     "Cache-Control": "no-cache",
+    "X-Frame-Options": "SAMEORIGIN",
+    "Content-Security-Policy": "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:",
   });
-  res.send(preview.html);
+  res.send(html);
 });
 
 // Apply CRO fixes endpoint

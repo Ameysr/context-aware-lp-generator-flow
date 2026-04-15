@@ -1,8 +1,9 @@
-﻿import { ChatGroq } from "@langchain/groq";
+import { ChatGroq } from "@langchain/groq";
 import { ChatOpenAI } from "@langchain/openai";
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
 
 let activeLLM: "groq" | "deepseek" = "groq";
+let fallbackTimestamp: number = 0;
 
 function createGroqLLM(): BaseChatModel {
   console.log("[LLM ROUTER] Creating Groq instance → model: llama-3.3-70b-versatile");
@@ -17,7 +18,7 @@ function createGroqLLM(): BaseChatModel {
 function createDeepSeekLLM(): BaseChatModel {
   console.log("[LLM ROUTER] Creating DeepSeek instance → model: deepseek-chat");
   return new ChatOpenAI({
-    openAIApiKey: process.env.DEEPSEEK_API_KEY,
+    apiKey: process.env.DEEPSEEK_API_KEY,
     configuration: {
       baseURL: "https://api.deepseek.com",
     },
@@ -28,6 +29,12 @@ function createDeepSeekLLM(): BaseChatModel {
 }
 
 export function getLLM(): BaseChatModel {
+  // Auto-reset to Groq after 60 seconds of fallback
+  if (activeLLM === "deepseek" && Date.now() - fallbackTimestamp > 60_000) {
+    console.log("[LLM ROUTER] Auto-resetting to Groq (60s cooldown expired)");
+    activeLLM = "groq";
+  }
+
   if (activeLLM === "deepseek") {
     console.log("[LLM ROUTER] Using DeepSeek (fallback active)");
     return createDeepSeekLLM();
@@ -38,7 +45,8 @@ export function getLLM(): BaseChatModel {
 
 export function switchToFallback(): void {
   activeLLM = "deepseek";
-  console.log("[LLM ROUTER] SWITCHED to DeepSeek fallback");
+  fallbackTimestamp = Date.now();
+  console.log("[LLM ROUTER] SWITCHED to DeepSeek fallback (60s cooldown)");
 }
 
 export function resetToPrimary(): void {

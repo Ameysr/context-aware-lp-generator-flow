@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: adsync-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    plan: starter        # upgrade to standard if you need more RAM for Playwright
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      # --- Set these in the Render dashboard (Environment tab) ---
+      - key: GROQ_API_KEY
+        sync: false
+      - key: DEEPSEEK_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false

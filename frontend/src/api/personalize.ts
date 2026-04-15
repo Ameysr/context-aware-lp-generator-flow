@@ -1,6 +1,8 @@
 import axios from "axios";
 
-const API_BASE = "";
+// In dev: Vite proxy handles /api → localhost:3001
+// In production: point to the deployed Render backend
+const API_BASE = import.meta.env.VITE_API_URL ?? "";
 
 interface StepEvent {
   type: "step";

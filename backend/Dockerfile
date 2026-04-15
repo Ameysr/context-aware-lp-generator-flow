@@ -1,8 +1,23 @@
 # ============================================================
-# AdSync Backend — Production Dockerfile
-# Node 20 + Playwright Chromium for headless scraping
+# AdSync Backend — Production Dockerfile (multi-stage)
+# Stage 1: Compile TypeScript (needs devDeps)
+# Stage 2: Lean runtime with Playwright/Chromium
 # ============================================================
-FROM node:20-slim AS base
+
+# --- Stage 1: Build ---
+FROM node:20-slim AS builder
+
+WORKDIR /app
+
+COPY package*.json ./
+# Install ALL deps (including TypeScript devDeps for build)
+RUN npm ci
+
+COPY . .
+RUN npm run build
+
+# --- Stage 2: Runtime ---
+FROM node:20-slim AS runner
 
 # Install Playwright system dependencies (Chromium)
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -20,27 +35,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpango-1.0-0 \
     libcairo2 \
     libcups2 \
-    libxss1 \
-    libgtk-3-0 \
     libx11-xcb1 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# ---------- Dependencies ----------
-COPY package.json package-lock.json ./
+# Install only production deps
+COPY package*.json ./
 RUN npm ci --omit=dev
 
 # Install Playwright Chromium browser
 RUN npx playwright install chromium
 
-# ---------- Source ----------
-COPY . .
+# Copy compiled output from builder
+COPY --from=builder /app/dist ./dist
 
-# ---------- Build ----------
-RUN npm run build
-
-# ---------- Runtime ----------
 ENV NODE_ENV=production
 ENV PORT=3001
 

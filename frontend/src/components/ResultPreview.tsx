@@ -16,7 +16,7 @@ function cssColorToHex(color: string): string {
 }
 
 /* ---------- SVG Gauge ---------- */
-const ScoreGauge: React.FC<{ score: number; brandHex: string }> = ({ score, brandHex }) => {
+const ScoreGauge: React.FC<{ score: number }> = ({ score }) => {
   const [animatedScore, setAnimatedScore] = useState(0);
   const radius = 54;
   const circumference = 2 * Math.PI * radius;
@@ -251,13 +251,52 @@ const ResultPreview: React.FC<ResultPreviewProps> = ({ result, onReset }) => {
         </button>
       </div>
 
-      {/* ---- Hero: Score + Meta ---- */}
+      {/* ---- Hero: Dual Scores + Meta ---- */}
       <div className="result-hero">
-        <ScoreGauge score={score} brandHex={brandHex} />
+        <ScoreGauge score={score} />
+
+        {/* Message Match % — deterministic score */}
+        {result.messageMatchScore && (
+          <div className="message-match-card">
+            <div className="mm-header">
+              <span className="mm-percentage" style={{
+                color: result.messageMatchScore.overall >= 70 ? '#10b981' :
+                       result.messageMatchScore.overall >= 45 ? '#f59e0b' : '#ef4444'
+              }}>
+                {result.messageMatchScore.overall}%
+              </span>
+              <span className="mm-label">Message Match</span>
+            </div>
+            <div className="mm-bars">
+              <div className="mm-bar-row">
+                <span className="mm-bar-label">Headline</span>
+                <div className="mm-bar-track">
+                  <div className="mm-bar-fill" style={{ width: `${result.messageMatchScore.headlineMatch}%`, background: '#818cf8' }} />
+                </div>
+                <span className="mm-bar-value">{result.messageMatchScore.headlineMatch}%</span>
+              </div>
+              <div className="mm-bar-row">
+                <span className="mm-bar-label">Offer/CTA</span>
+                <div className="mm-bar-track">
+                  <div className="mm-bar-fill" style={{ width: `${result.messageMatchScore.offerMatch}%`, background: '#a78bfa' }} />
+                </div>
+                <span className="mm-bar-value">{result.messageMatchScore.offerMatch}%</span>
+              </div>
+              <div className="mm-bar-row">
+                <span className="mm-bar-label">Benefit</span>
+                <div className="mm-bar-track">
+                  <div className="mm-bar-fill" style={{ width: `${result.messageMatchScore.benefitMatch}%`, background: '#c4b5fd' }} />
+                </div>
+                <span className="mm-bar-value">{result.messageMatchScore.benefitMatch}%</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="result-meta">
-          <h2 className="result-meta-title">Message Match Score</h2>
+          <h2 className="result-meta-title">Personalization Score</h2>
           <p className="result-meta-desc">
-            How well the personalized copy aligns with your ad creative's message, tone, and benefits.
+            LLM self-assessment ({score}/10) + deterministic message match ({result.messageMatchScore?.overall || 0}%).
           </p>
           <div className="meta-chips">
             <div className={`meta-chip meta-chip--${llmUsed}`}>

@@ -87,18 +87,32 @@ function App() {
                   <span className="demo-divider-line" />
                 </div>
 
-                <button
-                  className="btn btn--demo btn--full"
-                  onClick={() => {
-                    setAdInput({ adText: "Track issues 10x faster than Jira.\nLinear is built for high-performance teams.\nFree for teams under 250. Try Linear today —\nno credit card required." });
-                    setPageUrl("https://linear.app");
-                  }}
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <polygon points="5 3 19 12 5 21 5 3" />
-                  </svg>
-                  Load Demo — Linear vs Jira Ad
-                </button>
+                <div className="demo-buttons">
+                  <button
+                    className="btn btn--demo btn--full"
+                    onClick={() => {
+                      setAdInput({ adText: "Replace your messy wiki, docs, and project tools.\nNotion combines notes, docs, and project management in one workspace.\nFree for teams up to 10. Start your free trial today —\nno credit card required." });
+                      setPageUrl("https://www.notion.com");
+                    }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polygon points="5 3 19 12 5 21 5 3" />
+                    </svg>
+                    Demo 1 — Notion SaaS Ad
+                  </button>
+                  <button
+                    className="btn btn--demo btn--full"
+                    onClick={() => {
+                      setAdInput({ adText: "Launch your online store in minutes, not months.\nShopify powers 4M+ businesses worldwide.\n3-day free trial + first month for ₹20.\nNo coding required — start selling today." });
+                      setPageUrl("https://www.shopify.com");
+                    }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polygon points="5 3 19 12 5 21 5 3" />
+                    </svg>
+                    Demo 2 — Shopify eCommerce Ad
+                  </button>
+                </div>
               </div>
 
               <div className="form-footer">

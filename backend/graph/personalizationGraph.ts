@@ -1,9 +1,10 @@
-﻿import { runAdAnalysisChain } from "../chains/adAnalysisChain";
+import { runAdAnalysisChain } from "../chains/adAnalysisChain";
 import { runPageIngestionChain } from "../chains/pageIngestionChain";
 import { runPersonalizationChain } from "../chains/personalizationChain";
 import { runValidationChain } from "../chains/validationChain";
 import { runCROAnalysisChain } from "../chains/croAnalysisChain";
 import { injectPersonalizedCopy } from "../utils/htmlInjector";
+import { computeMessageMatch } from "../utils/messageMatchScorer";
 import { getActiveLLM } from "../utils/llmRouter";
 import type { AdProfile } from "../schemas/adProfileSchema";
 import type { PageProfile } from "../schemas/pageProfileSchema";
@@ -47,6 +48,7 @@ export interface GraphState {
   baseUrl: string;
   modifiedHTML: string;
   croAnalysis: CROAnalysis | null;
+  messageMatchScore: { overall: number; headlineMatch: number; offerMatch: number; benefitMatch: number; breakdown: string[] } | null;
 }
 
 // ---------- Step event emitter type ----------
@@ -92,6 +94,7 @@ export async function runPersonalizationGraph(
     baseUrl: "",
     modifiedHTML: "",
     croAnalysis: null,
+    messageMatchScore: null,
   };
 
   try {
@@ -176,21 +179,28 @@ export async function runPersonalizationGraph(
     console.log("\n[GRAPH] ═══ PHASE 3: HTML Injection ═══");
     emitStep?.(5, "Injecting Personalized Copy", "active");
 
+    // Compute deterministic message match score
+    if (state.adProfile && state.personalizedCopy) {
+      state.messageMatchScore = computeMessageMatch(state.adProfile, state.personalizedCopy);
+    }
+
     if (state.fullHTML && state.personalizedCopy) {
       try {
         state.modifiedHTML = injectPersonalizedCopy(
           state.fullHTML,
           state.personalizedCopy,
           state.elementSelectors,
-          state.baseUrl
+          state.baseUrl,
+          state.adProfile || undefined,
+          state.brandColors
         );
-        console.log(`[GRAPH] HTML injection complete — ${(state.modifiedHTML.length / 1024).toFixed(0)}KB modified HTML`);
+        console.log(`[GRAPH] ✅ HTML injection complete — ${(state.modifiedHTML.length / 1024).toFixed(0)}KB modified HTML`);
       } catch (injectionError: any) {
-        console.warn(`[GRAPH] HTML injection failed: ${injectionError.message}`);
+        console.warn(`[GRAPH] ⚠️  HTML injection failed: ${injectionError.message}`);
         state.modifiedHTML = "";
       }
     } else {
-      console.warn("[GRAPH] No HTML or copy available for injection");
+      console.warn("[GRAPH] ⚠️  No HTML or copy available for injection");
     }
 
     emitStep?.(5, "Injecting Personalized Copy", "done");
@@ -234,6 +244,7 @@ export async function runPersonalizationGraph(
       modifiedHTML: state.modifiedHTML,
       originalHTML: state.fullHTML,
       croAnalysis: state.croAnalysis,
+      messageMatchScore: state.messageMatchScore,
       // Pass through for refine re-injection
       elementSelectors: state.elementSelectors,
       baseUrl: state.baseUrl,
@@ -242,7 +253,7 @@ export async function runPersonalizationGraph(
     console.log("\n" + "█".repeat(70));
     console.log(`█  PIPELINE COMPLETE — ${pipelineElapsed}ms`);
     console.log(`█  LLM: ${state.llmUsed} | Vision: ${state.visionUsed} | Retries: ${state.retryCount}`);
-    console.log(`█  Score: ${state.validationResult?.score}/10`);
+    console.log(`█  Score: ${state.validationResult?.score}/10 | Message Match: ${state.messageMatchScore?.overall || 0}%`);
     console.log(`█  Modified HTML: ${state.modifiedHTML ? `${(state.modifiedHTML.length / 1024).toFixed(0)}KB` : "none"}`);
     console.log("█".repeat(70) + "\n");
 

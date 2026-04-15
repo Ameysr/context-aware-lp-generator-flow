@@ -1,4 +1,4 @@
-﻿import express, { Request, Response } from "express";
+import express, { Request, Response } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import rateLimit from "express-rate-limit";
@@ -405,6 +405,7 @@ app.post("/api/personalize", async (req: Request, res: Response) => {
         brandColors: output.brandColors,
         faviconUrl: output.faviconUrl,
         croAnalysis: output.croAnalysis || null,
+        messageMatchScore: output.messageMatchScore || null,
         // Required for refine re-injection
         elementSelectors: output.elementSelectors || null,
         baseUrl: output.baseUrl || "",

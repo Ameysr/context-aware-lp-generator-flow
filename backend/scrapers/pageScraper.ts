@@ -1,4 +1,4 @@
-﻿import { chromium } from "playwright";
+import { chromium } from "playwright";
 
 export interface ElementSelectors {
   headline: string;
@@ -95,11 +95,20 @@ export async function scrapePage(url: string): Promise<ScrapedPage> {
         // Try ID first
         if (el.id) return `#${el.id}`;
 
-        // Try unique class combination
+        // Try unique class combination — filter out Tailwind/special classes with : [ ] / etc.
         if (el.classList.length > 0) {
-          const classSelector = `${el.tagName.toLowerCase()}.${Array.from(el.classList).join(".")}`;
-          if (document.querySelectorAll(classSelector).length === 1) {
-            return classSelector;
+          const safeClasses = Array.from(el.classList).filter(
+            (c: string) => !/[:\[\]\/\\@!#$%^&*()+={}|<>?,]/.test(c) && c.length > 0
+          );
+          if (safeClasses.length > 0) {
+            const classSelector = `${el.tagName.toLowerCase()}.${safeClasses.join(".")}`;
+            try {
+              if (document.querySelectorAll(classSelector).length === 1) {
+                return classSelector;
+              }
+            } catch (e) {
+              // Selector still invalid — fall through to nth-child path
+            }
           }
         }
 

@@ -58,6 +58,13 @@ export interface PersonalizeResult {
       fix: string;
     }>;
   } | null;
+  messageMatchScore?: {
+    overall: number;
+    headlineMatch: number;
+    offerMatch: number;
+    benefitMatch: number;
+    breakdown: string[];
+  } | null;
   error?: string;
   stage?: string;
 }

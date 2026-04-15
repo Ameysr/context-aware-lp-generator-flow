@@ -1,6 +1,7 @@
-﻿import * as cheerio from "cheerio";
+import * as cheerio from "cheerio";
 import type { PersonalizedCopy } from "../schemas/personalizedCopySchema";
 import type { ElementSelectors } from "../scrapers/pageScraper";
+import type { AdProfile } from "../schemas/adProfileSchema";
 
 /**
  * Surgically inject personalized copy into the original page's HTML.
@@ -11,7 +12,9 @@ export function injectPersonalizedCopy(
   originalHTML: string,
   personalizedCopy: PersonalizedCopy,
   selectors: ElementSelectors,
-  baseUrl: string
+  baseUrl: string,
+  adProfile?: AdProfile,
+  brandColors?: { primary: string; background: string; text: string }
 ): string {
   console.log("[HTML INJECTOR] Starting surgical text injection...");
   const $ = cheerio.load(originalHTML);
@@ -175,7 +178,53 @@ export function injectPersonalizedCopy(
     }
   }
 
-  // 5. Add a subtle indicator badge
+  // 5. Auto-inject offer banner when ad contains discount/urgency terms
+  if (adProfile) {
+    const offerText = `${adProfile.offer} ${adProfile.headline} ${adProfile.cta_text}`.toLowerCase();
+
+    // Detect offer patterns
+    const discountMatch = offerText.match(/(\d+%\s*off|\$\d+\s*off|₹\d+\s*off|half\s*price)/i);
+    const freeMatch = offerText.match(/(free\s*trial|free\s*shipping|free\s*plan|no\s*credit\s*card|free\s*for)/i);
+    const urgencyMatch = offerText.match(/(limited\s*time|today\s*only|ends\s*soon|last\s*chance|hurry|while\s*supplies)/i);
+
+    const offerParts: string[] = [];
+    if (discountMatch) offerParts.push(discountMatch[0].toUpperCase());
+    if (freeMatch) offerParts.push(freeMatch[0].split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" "));
+    if (urgencyMatch) offerParts.push("⏰ " + urgencyMatch[0].split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" "));
+
+    if (offerParts.length > 0) {
+      // Detect page theme from brand colors
+      const bgColor = brandColors?.background || "#ffffff";
+      const isDarkPage = bgColor.toLowerCase() === "#000000" || bgColor.toLowerCase() === "#000" ||
+        (bgColor.startsWith("#") && parseInt(bgColor.slice(1, 3), 16) < 60);
+
+      const bannerBg = isDarkPage
+        ? "linear-gradient(135deg, #6366f1 0%, #a78bfa 50%, #8b5cf6 100%)"
+        : "linear-gradient(135deg, #6366f1 0%, #818cf8 50%, #a78bfa 100%)";
+
+      const bannerHTML = `
+        <div id="adsync-offer-banner" style="
+          position: relative; z-index: 99998;
+          background: ${bannerBg};
+          color: white; text-align: center;
+          padding: 10px 20px;
+          font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+          font-size: 14px; font-weight: 600;
+          letter-spacing: 0.3px;
+          box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+        ">
+          ${offerParts.join("  ·  ")}
+        </div>
+      `;
+
+      // Insert at the top of <body>
+      $("body").prepend(bannerHTML);
+      changesApplied++;
+      console.log(`[HTML INJECTOR]    ✅ Offer banner injected: "${offerParts.join(" · ")}"`);
+    }
+  }
+
+  // 6. Add a subtle indicator badge
   const badge = `
     <div id="adsync-personalized-badge" style="
       position: fixed; bottom: 16px; right: 16px; z-index: 99999;
@@ -185,7 +234,7 @@ export function injectPersonalizedCopy(
       font-size: 12px; font-weight: 600; letter-spacing: 0.3px;
       box-shadow: 0 4px 12px rgba(99,102,241,0.3);
       pointer-events: none; opacity: 0.9;
-    ">Personalized by AdSync</div>
+    ">⚡ Personalized by AdSync</div>
   `;
   $("body").append(badge);
 

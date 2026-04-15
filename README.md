@@ -24,7 +24,102 @@ An AI powered system that takes **any ad creative** (image, text, or URL) and a 
 | **Iterative Copy Refinement** | After generation, users can type plain English instructions to refine the copy unlimited times "make the headline more urgent", "change Linear to Binear everywhere", or "focus on solo devs not teams" each refinement re injects into the original HTML and shows an updated live preview instantly |
 | **Global Text Find and Replace** | When the user asks to change a specific word or brand name, the AI detects the intent and applies a global DOM level find and replace across the entire page HTML including navbar, footer, and all repeated occurrences |
 | **Refinement Version History** | Every refinement instruction is logged with a timestamp and a list of what changed. Users can restore any previous version of the page with one click |
+| **Deterministic Message Match Scoring** | A repeatable, LLM-free percentage score (0–100%) computed via Jaccard similarity and keyword coverage across 3 layers: Headline Match (40%), Offer/CTA Match (30%), and Benefit/ValueProp Match (30%) — displayed alongside the LLM's self-assessed score |
+| **Auto Offer Banner Injection** | When the ad contains discount, free trial, or urgency terms, a themed offer banner is automatically injected at the top of the personalized page during initial generation — no manual CRO step needed |
 | **Fully Dockerized** | Both frontend (Nginx + Vite) and backend (Node + Playwright) are containerized with Docker Compose one command to run the entire stack | |
+
+---
+
+## Industry Comparison & Roadmap
+
+After studying how production CRO platforms approach message match and dynamic landing pages, we benchmarked AdSync against industry standards to identify gaps. Below is what has been implemented, what hasn't (and why), and the production roadmap.
+
+### Implemented
+
+#### 1. Deterministic Message Match Scoring
+
+| What industry does | What AdSync does |
+|---|---|
+| Production CRO tools quantify message match as a % (0%, 40%, 100%). Industry data shows 0% match → 76% bounce, 100% match → 28% bounce (+340% conversion lift) | AdSync computes a **deterministic message match score** (0 to 100%) using Jaccard similarity + keyword coverage across 3 layers. No LLM involved, fully explainable and repeatable |
+
+**How it works:**
+
+```
+Message Match Score = Headline (40%) + Offer/CTA (30%) + Benefit (30%)
+
+  Headline:  Jaccard similarity of ad headline tokens vs generated headline tokens
+  Offer/CTA: % of ad offer keywords appearing in CTA + subheadline
+  Benefit:   % of ad benefit keywords appearing in value props
+
+Stopwords are filtered, text is normalized to lowercase.
+Result is a concrete "Message Match: 87%" not a subjective "Score: 8/10".
+```
+
+This metric is displayed in the frontend alongside the LLM's self assessed personalization score, giving users **two complementary perspectives**: one deterministic (message match %), one semantic (LLM score).
+
+#### 2. Auto Offer Banner Injection
+
+| What industry does | What AdSync does |
+|---|---|
+| Production platforms auto inject urgency banners, countdown timers, and offer displays during page generation | AdSync detects discount/free/urgency terms in the ad profile and auto injects a themed offer banner at the top of the personalized page **during initial generation** |
+
+**Detection patterns:**
+- Discount: `50% off`, `$10 off`, `₹500 off`, `half price`
+- Free offers: `free trial`, `free shipping`, `no credit card`, `free for`
+- Urgency: `limited time`, `today only`, `ends soon`, `last chance`
+
+The banner is **theme aware** and detects whether the page uses a dark or light background, adjusting gradient colors accordingly.
+
+#### 3. Subheadline as Benefit Proof (Already Covered)
+
+Industry standard Layer 2 (Benefit Match) ensures the specific benefit from the ad is proven on the page. AdSync's `new_subheadline` already reinforces the ad's key benefit, and the 3 value props provide supporting proof points.
+
+### Not Implemented (Resource Constraints)
+
+The following features are standard in production CRO platforms but are not implemented due to infrastructure and resource constraints. They are documented here to show awareness of the industry standard.
+
+#### 1. Template System
+
+**What industry does:** Production platforms own the page template with variables (`{ad_headline}`, `{price_range}`, `{discount_percentage}`). Pages are generated in <80ms by filling variables, no scraping needed.
+
+**Why not implemented:** This requires a template builder UI, a variable mapping system, and a product catalog integration. AdSync instead uses a **scrape and inject approach** that works on any website without requiring template ownership, a harder engineering problem but with a broader use case.
+
+#### 2. A/B Variant Generation
+
+**What industry does:** Production platforms auto generate 100+ variations per ad and track which converts best over time.
+
+**Why not implemented:** Generating multiple variants is trivial (ask the LLM for 3 headlines instead of 1), but **tracking conversion rates** requires a JavaScript snippet deployed on the live page, an analytics backend, and a statistical significance calculator. This is a product feature, not a demo feature.
+
+#### 3. Visual/Time Frame Match (Industry Layers 3 to 5)
+
+**What industry does:** Matches visual style (lifestyle vs minimalist), reinforces time based claims ("results in 14 days"), and mirrors ad imagery on the landing page.
+
+**Why not implemented:** Visual match requires generative image capabilities or a curated image library. Time frame match requires parsing temporal claims and injecting timeline UI components. Both are production grade features beyond the scope of a copy personalization engine.
+
+#### 4. Mobile First Preview
+
+**What industry does:** 78% of ad clicks come from mobile. Industry platforms emphasize mobile first message matching.
+
+**Why not implemented yet:** The iframe preview currently renders at desktop width (1280px). A mobile viewport toggle (375px) is a straightforward addition but was deprioritized in favor of core pipeline reliability.
+
+#### 5. URL Parameter Pass Through & Real Time Signals
+
+**What industry does:** Production platforms read UTM parameters and 140+ behavioral signals to personalize in real time (<80ms).
+
+**Why not implemented:** Real time edge personalization requires a CDN level deployment (Cloudflare Workers, Vercel Edge Functions) and session tracking infrastructure. AdSync operates as an offline analysis tool, not a real time proxy.
+
+### Production Roadmap
+
+These features would elevate AdSync from a portfolio project to a production SaaS:
+
+| Priority | Feature | Description | Effort |
+|---|---|---|---|
+| P0 | **Redis/MongoDB Store** | Move previewStore + sessionStore from in memory Map to persistent storage | 1 day |
+| P1 | **Batch Processing API** | Accept 100+ ads via CSV, generate personalized pages in parallel, export as package | 2 days |
+| P1 | **Mobile Preview Toggle** | Add 375px viewport button alongside desktop preview | 2 hours |
+| P2 | **Multi Variant Headlines** | Generate 3 headline options per analysis, let user pick | 3 hours |
+| P2 | **Template Builder** | Let users upload HTML templates with `{{headline}}` variables for <100ms generation | 1 week |
+| P3 | **Conversion Analytics** | Track CTA click through rates, A/B test variants, show lift over time | 2 weeks |
 
 ---
 
@@ -400,6 +495,8 @@ Every refinement is logged in the frontend with:
 - The `previewId` for that specific version
 
 Users can **restore any previous version** instantly with one click.
+
+---
 
 ---
 

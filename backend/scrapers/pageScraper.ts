@@ -54,7 +54,23 @@ export async function scrapePage(url: string): Promise<ScrapedPage> {
 
   let browser;
   try {
-    browser = await chromium.launch({ headless: true });
+    browser = await chromium.launch({
+      headless: true,
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",     // critical for low-memory containers
+        "--disable-gpu",
+        "--disable-extensions",
+        "--disable-background-networking",
+        "--disable-default-apps",
+        "--disable-sync",
+        "--disable-translate",
+        "--single-process",             // saves ~100MB on free tier
+        "--no-zygote",                  // saves ~50MB on free tier
+        "--js-flags=--max-old-space-size=256",
+      ],
+    });
     console.log(`[SCRAPER]    Browser launched in ${Date.now() - startTime}ms`);
 
     const context = await browser.newContext({
@@ -73,8 +89,8 @@ export async function scrapePage(url: string): Promise<ScrapedPage> {
       await page.goto(url, { timeout: 25000, waitUntil: "commit" });
     }
 
-    // Wait for rendering
-    await page.waitForTimeout(2500);
+    // Wait for rendering (reduced for memory savings)
+    await page.waitForTimeout(1500);
     console.log(`[SCRAPER]    Page settled. Extracting content + colors...`);
 
     // Take screenshot (above-the-fold)

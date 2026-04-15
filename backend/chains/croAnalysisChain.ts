@@ -1,4 +1,4 @@
-﻿import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { invokeLLMWithRetry } from "../utils/retryHandler";
 import { croAnalysisSchema, type CROAnalysis } from "../schemas/croAnalysisSchema";
 import type { PageProfile } from "../schemas/pageProfileSchema";
@@ -27,7 +27,7 @@ export async function runCROAnalysisChain(input: CROInput): Promise<CROAnalysis>
     console.log("[CRO CHAIN] Step 1: Gemini Vision analyzing page screenshot...");
     try {
       const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
       const imagePart = {
         inlineData: {

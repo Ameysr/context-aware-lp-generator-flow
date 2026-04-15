@@ -81,7 +81,7 @@ export async function submitPersonalize(payload: {
   sessionId?: string;
 }): Promise<any> {
   const response = await axios.post(`${API_BASE}/api/personalize`, payload, {
-    timeout: 120000, // 2 min timeout for full pipeline
+    timeout: 300000, // 5 min timeout — Render free tier can be slow on cold start
   });
   return response.data;
 }

@@ -1,3 +1,34 @@
+## Assignment Submission Summary (For Reviewers)
+
+**Candidate**: Amey  
+**Demo**: [Video Link](https://youtu.be/PoU-nUDqdO8?si=Rwb4ymoIDtHbtwwi) | Full Docs Below
+
+### What Was Delivered
+| Requirement | Status |
+|-------------|--------|
+| Input: ad creative + landing page URL | Done — Image, text, or URL all three supported |
+| Output: personalized landing page | Done — AI rewritten copy injected into original HTML |
+| Not a new page enhanced existing | Done — Preserves all layout, styling, scripts, and assets |
+| Handle: random changes | Done — Banned word filter + constraint prompts + auto-retry (up to 4 attempts) |
+| Handle: broken UI | Done — Full HTML capture + absolute URL rewriting + `<base>` tag injection |
+| Handle: hallucinations | Done — Two layer validation (deterministic rules + LLM self check >= 7/10) |
+| Handle: inconsistent outputs | Done — Low temp LLM (0.1) + strict JSON schemas + deterministic rule layer |
+
+### Key Differentiators
+- **Multi modal ad input**: Works with uploaded images (Gemini Vision), pasted text, or ad URLs no format restrictions
+- **Two layer validation gate**: Every output passes deterministic rules + LLM scoring before the user sees it
+- **Deterministic message match scoring**: Explainable 0-100% score (Jaccard + keyword coverage) not just "LLM vibes"
+- **Iterative refinement**: Users can refine the copy unlimited times with plain English instructions, with full version history and one click restore
+
+### Quick Links
+- **Demo Video**: [https://youtu.be/PoU-nUDqdO8](https://youtu.be/PoU-nUDqdO8?si=Rwb4ymoIDtHbtwwi)
+- **Run Locally**: `docker-compose up --build` (fully containerized)
+- **Full Technical Docs**: Continue reading below
+
+> *Why no public live link?* The pipeline uses Playwright (headless Chromium) + 3 LLM APIs, requiring ~800MB RAM beyond free tier hosting limits. Runs perfectly via Docker locally. Happy to demo live on a quick call!
+
+---
+
 # AdSync Context Aware Landing Page Personalizer
 
 An AI powered system that takes **any ad creative** (image, text, or URL) and a **target landing page URL**, then automatically generates and injects **message-matched personalized copy** into the landing page with a live before/after comparison and CRO (Conversion Rate Optimization) audit all in under 15 seconds.

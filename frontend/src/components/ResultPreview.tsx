@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import type { PersonalizeResult } from "../hooks/usePersonalize";
+import { API_BASE } from "../api/personalize";
 
 interface ResultPreviewProps {
   result: PersonalizeResult;
@@ -138,8 +139,8 @@ const ResultPreview: React.FC<ResultPreviewProps> = ({ result, onReset }) => {
   // Build the preview URLs for the iframes
   // Refined preview takes priority over CRO-enhanced, which takes priority over original
   const activePreviewId = currentRefinedPreviewId || enhancedPreviewId || previewId;
-  const previewUrl = activePreviewId ? `/api/preview/${activePreviewId}` : null;
-  const originalPreviewUrl = originalPreviewId ? `/api/preview/${originalPreviewId}` : null;
+  const previewUrl = activePreviewId ? `${API_BASE}/api/preview/${activePreviewId}` : null;
+  const originalPreviewUrl = originalPreviewId ? `${API_BASE}/api/preview/${originalPreviewId}` : null;
 
   // The "base" previewId to re-inject against is always the original modifiedHTML
   const basePreviewId = previewId;
@@ -149,7 +150,7 @@ const ResultPreview: React.FC<ResultPreviewProps> = ({ result, onReset }) => {
     if (!previewId || !croAnalysis || croApplying) return;
     setCroApplying(true);
     try {
-      const res = await fetch("/api/apply-cro", {
+      const res = await fetch(`${API_BASE}/api/apply-cro`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ previewId, croAnalysis, brandColors }),
@@ -174,7 +175,7 @@ const ResultPreview: React.FC<ResultPreviewProps> = ({ result, onReset }) => {
     setRefineLoading(true);
     setRefineError(null);
     try {
-      const res = await fetch("/api/refine", {
+      const res = await fetch(`${API_BASE}/api/refine`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

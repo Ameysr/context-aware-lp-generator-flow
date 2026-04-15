@@ -14,7 +14,12 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // ---------- Middleware ----------
-app.use(cors({ origin: "*" }));
+app.use(cors({
+  origin: true, // reflect request origin (works with credentials unlike "*")
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  credentials: true,
+}));
 app.use(express.json({ limit: "10mb" }));
 
 const limiter = rateLimit({

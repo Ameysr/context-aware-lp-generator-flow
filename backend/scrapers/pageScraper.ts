@@ -62,12 +62,9 @@ export async function scrapePage(url: string): Promise<ScrapedPage> {
         "--disable-dev-shm-usage",     // critical for low-memory containers
         "--disable-gpu",
         "--disable-extensions",
-        "--disable-background-networking",
         "--disable-default-apps",
         "--disable-sync",
         "--disable-translate",
-        "--single-process",             // saves ~100MB on free tier
-        "--no-zygote",                  // saves ~50MB on free tier
         "--js-flags=--max-old-space-size=256",
       ],
     });

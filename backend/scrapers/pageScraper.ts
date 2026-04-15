@@ -90,14 +90,24 @@ export async function scrapePage(url: string): Promise<ScrapedPage> {
     await page.waitForTimeout(1500);
     console.log(`[SCRAPER]    Page settled. Extracting content + colors...`);
 
-    // Take screenshot (above-the-fold)
-    const screenshotBuffer = await page.screenshot({
-      type: "jpeg",
-      quality: 60,
-      clip: { x: 0, y: 0, width: 1280, height: 800 },
-    });
-    const screenshotBase64 = screenshotBuffer.toString("base64");
-    console.log(`[SCRAPER]    Screenshot captured: ${(screenshotBase64.length * 0.75 / 1024).toFixed(0)}KB`);
+    // Take screenshot (above-the-fold) — non-fatal, skip if it fails
+    let screenshotBase64 = "";
+    try {
+      const screenshotBuffer = await Promise.race([
+        page.screenshot({
+          type: "jpeg",
+          quality: 60,
+          clip: { x: 0, y: 0, width: 1280, height: 800 },
+        }),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("Screenshot timeout")), 10000)
+        ),
+      ]);
+      screenshotBase64 = screenshotBuffer.toString("base64");
+      console.log(`[SCRAPER]    Screenshot captured: ${(screenshotBase64.length * 0.75 / 1024).toFixed(0)}KB`);
+    } catch (ssErr: any) {
+      console.warn(`[SCRAPER]    Screenshot skipped: ${ssErr.message}`);
+    }
 
     // Extract content + brand colors + element selectors in one evaluate call
     const result: EvalResult = await page.evaluate(() => {

@@ -1,11 +1,16 @@
+# ============================================================
+#  AdSync — Render Blueprint (Single Service)
+#  Both frontend + backend served from one origin
+#  This avoids all cross-origin iframe issues
+# ============================================================
+
 services:
-  # ---------- Backend (Node.js API) ----------
   - type: web
-    name: adsync-backend
+    name: context-aware-lp-generator-flow
     runtime: node
-    rootDir: backend
-    buildCommand: npm install && npm run build
-    startCommand: npm start
+    buildCommand: |
+      cd frontend && npm install && npm run build && cd ../backend && npm install && npm run build
+    startCommand: cd backend && npm start
     plan: free
     envVars:
       - key: NODE_ENV
@@ -18,25 +23,4 @@ services:
       - key: DEEPSEEK_API_KEY
         sync: false
       - key: GEMINI_API_KEY
-        sync: false
-
-  # ---------- Frontend (Static Site) ----------
-  - type: web
-    name: adsync-frontend
-    runtime: static
-    rootDir: frontend
-    buildCommand: npm install && npm run build
-    staticPublishPath: dist
-    headers:
-      - path: /*
-        name: X-Frame-Options
-        value: SAMEORIGIN
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
-    envVars:
-      # Set this to your backend's Render URL in the dashboard
-      # Example: https://adsync-backend.onrender.com
-      - key: VITE_API_URL
         sync: false

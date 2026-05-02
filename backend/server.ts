@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import rateLimit from "express-rate-limit";
 import crypto from "crypto";
+import path from "path";
 import {
   runPersonalizationGraph,
   type StepEmitter,
@@ -142,8 +143,8 @@ app.get("/api/preview/:id", (req: Request, res: Response) => {
   res.set({
     "Content-Type": "text/html",
     "Cache-Control": "no-cache",
-    "X-Frame-Options": "SAMEORIGIN",
-    "Content-Security-Policy": "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:",
+    // No X-Frame-Options — preview content must be embeddable in iframes
+    "Content-Security-Policy": "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; frame-ancestors *;",
   });
   res.send(html);
 });
@@ -470,6 +471,16 @@ app.post("/api/personalize", async (req: Request, res: Response) => {
     });
     return;
   }
+});
+
+// ---------- Serve frontend static files (production) ----------
+// In production, the frontend build is placed in ../frontend/dist
+// At runtime, __dirname = backend/dist/ — go up two levels to repo root, then into frontend/dist
+const frontendPath = path.join(__dirname, "..", "..", "frontend", "dist");
+app.use(express.static(frontendPath));
+// SPA fallback — all non-API routes serve index.html
+app.get("*", (_req: Request, res: Response) => {
+  res.sendFile(path.join(frontendPath, "index.html"));
 });
 
 // ---------- Start server ----------

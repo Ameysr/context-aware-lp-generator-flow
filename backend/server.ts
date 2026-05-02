@@ -478,8 +478,8 @@ app.post("/api/personalize", async (req: Request, res: Response) => {
 // At runtime, __dirname = backend/dist/ — go up two levels to repo root, then into frontend/dist
 const frontendPath = path.join(__dirname, "..", "..", "frontend", "dist");
 app.use(express.static(frontendPath));
-// SPA fallback — all non-API routes serve index.html
-app.get("*", (_req: Request, res: Response) => {
+// SPA fallback — all non-API routes serve index.html (Express 5 syntax)
+app.get("/{*splat}", (_req: Request, res: Response) => {
   res.sendFile(path.join(frontendPath, "index.html"));
 });
 

@@ -1,4 +1,4 @@
-﻿import { scrapePage } from "../scrapers/pageScraper";
+import { scrapePage } from "../scrapers/pageScraper";
 import type { ElementSelectors } from "../scrapers/pageScraper";
 import { invokeLLMWithRetry } from "../utils/retryHandler";
 import {
@@ -19,7 +19,7 @@ export interface PageIngestionResult {
 
 /**
  * Page Ingestion Chain:
- * 1. Playwright scrapes the landing page (content + screenshot + brand colors + full HTML)
+ * 1. HTTP + Cheerio scrapes the landing page (content + brand colors + full HTML)
  * 2. Groq extracts structured page profile from scraped content
  */
 export async function runPageIngestionChain(url: string): Promise<PageIngestionResult> {
@@ -28,8 +28,8 @@ export async function runPageIngestionChain(url: string): Promise<PageIngestionR
   console.log(`[PAGE CHAIN]    URL: ${url}`);
   const startTime = Date.now();
 
-  // Step 1: Playwright scrape
-  console.log("[PAGE CHAIN] Step 1: Launching Playwright scraper...");
+  // Step 1: HTTP + Cheerio scrape
+  console.log("[PAGE CHAIN] Step 1: Fetching and parsing page...");
   const scraped = await scrapePage(url);
   const scrapeTime = Date.now() - startTime;
   console.log(`[PAGE CHAIN]    Scrape done in ${scrapeTime}ms`);
@@ -39,7 +39,7 @@ export async function runPageIngestionChain(url: string): Promise<PageIngestionR
   console.log(`[PAGE CHAIN]    Buttons: "${scraped.buttons.substring(0, 80)}"`);
   console.log(`[PAGE CHAIN]    RawText: ${scraped.rawText.length} chars total`);
   console.log(`[PAGE CHAIN]    Primary: ${scraped.brandColors.primary}`);
-  console.log(`[PAGE CHAIN]    Screenshot: ${(scraped.screenshotBase64.length * 0.75 / 1024).toFixed(0)}KB`);
+  console.log(`[PAGE CHAIN]    Screenshot: ${scraped.screenshotBase64 ? `${(scraped.screenshotBase64.length * 0.75 / 1024).toFixed(0)}KB` : "none (HTTP mode)"}`);
   console.log(`[PAGE CHAIN]    Full HTML: ${(scraped.fullHTML.length / 1024).toFixed(0)}KB`);
   console.log(`[PAGE CHAIN]    Selectors: headline=${scraped.elementSelectors.headline ? "found" : "not found"}, sub=${scraped.elementSelectors.subheadline ? "found" : "not found"}, cta=${scraped.elementSelectors.ctaButtons.length}, props=${scraped.elementSelectors.valueProps.length}`);
 
